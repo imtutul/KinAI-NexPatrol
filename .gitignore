@@ -1,0 +1,9 @@
+# data/*.db
+# detected_faces/*
+# logs/*
+# footage/*
+# docker_python_packages/*
+models/buffalo_l/*
+# n8n_data/*
+src/__pycache__/
+# videos/

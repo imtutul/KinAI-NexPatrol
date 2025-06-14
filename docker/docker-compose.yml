@@ -1,0 +1,49 @@
+services:
+  nexpatrol_agent:
+    build:
+      context: ..  
+      dockerfile: docker/Dockerfile
+    runtime: nvidia
+    privileged: true
+    volumes:
+      - ../src:/app/src
+      - ../data:/app/data
+      - ../models:/app/models
+      - ../configs:/app/configs
+      - ../footage:/app/footage
+      - ../detected_faces:/app/detected_faces
+      - ../debug:/app/debug
+      - ../logs:/app/logs
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /dev/video0:/dev/video0
+      - /dev/video2:/dev/video2
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - DISPLAY=:99
+      - QT_LOGGING_RULES=qt5ct.debug=false
+      - PYTHONPATH=/app/src
+    command: ["/bin/bash", "-c", "rm -f /tmp/.X99-lock && Xvfb :99 -ac & export DISPLAY=:99 && python3 /app/src/nexpatrol_agent.py"]
+    network_mode: host
+
+  n8n:
+    image: n8nio/n8n:1.91.0
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_WEBHOOK_TEST_URL=http://localhost:5678
+      - N8N_WEBHOOK_URL=http://localhost:5678
+      - N8N_SECURITY_WEBHOOK_SIMPLE=false
+      - N8N_WEBHOOK_TUNNEL_URL=http://localhost:5678
+      - N8N_PUBLIC_API_DISABLED=false
+      - NODE_ENV=production
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../detected_faces:/app/detected_faces
+    network_mode: host    
+volumes:
+  n8n_data:

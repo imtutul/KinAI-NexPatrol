@@ -1,0 +1,10 @@
+opencv-python
+requests
+ultralytics
+insightface==0.7.3
+onnxruntime-gpu
+scipy
+numpy
+ulid-py==1.1.0
+streamlit
+python-multipart

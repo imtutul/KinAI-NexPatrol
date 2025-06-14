@@ -1,0 +1,509 @@
+{
+  "name": "NexPatrol",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "right_cam",
+        "options": {}
+      },
+      "id": "2e8b335c-2a0f-4798-9966-69692aa461b1",
+      "name": "Right Camera Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1880,
+        40
+      ],
+      "webhookId": "c8f28f1f-6f78-4856-88ba-b7dbe0110770"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "front_cam",
+        "options": {}
+      },
+      "id": "09639e26-386f-4f48-b612-c915a53fc44f",
+      "name": "Front Camera Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1880,
+        180
+      ],
+      "webhookId": "48f4d52c-3d46-4b40-b6ee-2ef2bbe4949f"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "left_cam",
+        "options": {}
+      },
+      "id": "241969d2-cee7-4375-8583-2e508cef4367",
+      "name": "Left Camera Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1880,
+        320
+      ],
+      "webhookId": "f07bbf62-e1a2-443f-93c9-9d5d978b5747"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rear_cam",
+        "options": {}
+      },
+      "id": "ceff479b-9aa0-4c73-a4e8-36bf85e13b90",
+      "name": "Rear Camera Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1880,
+        460
+      ],
+      "webhookId": "c95f7220-564e-4207-ac3b-8ed7e7e000fe"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract the actual data from the body array if needed\nconst input = $json;\nlet cameraData;\n\n// Check if the input is an array with a body property that contains an array\nif (Array.isArray(input) && input[0] && Array.isArray(input[0].body)) {\n  // Extract the first item in the body array\n  cameraData = input[0].body[0];\n} else if (Array.isArray(input.body)) {\n  // If input has a body array directly\n  cameraData = input.body[0];\n} else {\n  // If input already has the camera data structure directly\n  cameraData = input;\n}\n\n// Set the camera_name based on which webhook node triggered\nlet camera_name = 'unknown_cam';\n\nif ($node['Right Camera Webhook']) {\n  camera_name = 'right_cam';\n} else if ($node['Front Camera Webhook']) {\n  camera_name = 'front_cam';\n} else if ($node['Left Camera Webhook']) {\n  camera_name = 'left_cam';\n} else if ($node['Rear Camera Webhook']) {\n  camera_name = 'rear_cam';\n}\n\n// Map device to human-readable name for backward compatibility\nlet deviceMapping = {\n  'camera_0': 'right_cam',\n  'camera_1': 'front_cam',\n  'camera_2': 'left_cam',\n  'camera_3': 'rear_cam'\n};\n\n// If the data has a device property, also map it\nif (cameraData.device && deviceMapping[cameraData.device]) {\n  camera_name = deviceMapping[cameraData.device];\n}\n\n// Create the transformed data structure for LLM processing\nreturn {\n  json: {\n    image_base64: cameraData.image_base64,\n    timestamp: cameraData.timestamp,\n    camera_name: camera_name,\n    unknown_id: cameraData.unknown_id,\n    previous_visitor: cameraData.previous_visitor,\n    visit_count: cameraData.visit_count,\n    first_seen: cameraData.first_seen,\n    last_seen: cameraData.last_seen,\n    frame_path: cameraData.frame_path\n  }\n};"
+      },
+      "id": "2790b8bc-cf9c-4285-804c-71506bae5283",
+      "name": "Process Camera Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -1640,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.visit_count}}",
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "4c70c9fc-d61b-495f-ab6b-038fd0510500",
+      "name": "Known/Unknown Split",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemma3:4b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -1160,
+        260
+      ],
+      "id": "bb2c1998-b6e1-4711-a038-49238acf2221",
+      "name": "Ollama Vision Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "SnfghyTFzrzEhML9",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama3.2-vision:11b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        720
+      ],
+      "id": "5b32f3e4-88d9-49e6-9f27-e93d6887ecb2",
+      "name": "Ollama Vision Model1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "SnfghyTFzrzEhML9",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.risk_level}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "Low"
+            },
+            {
+              "value2": "Medium"
+            },
+            {
+              "value2": "High"
+            },
+            {
+              "value2": "Very High"
+            },
+            {
+              "value2": "Extreme"
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "id": "c25ef8d7-236d-4a5a-aab2-069851770af0",
+      "name": "Risk Level Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Function to properly escape Telegram MarkdownV2\nfunction escapeMarkdown(text) {\n  if (!text) return '';\n  return String(text).replace(/[_*[\\]()~`>#+\\-=|{}.!]/g, '\\\\$&');\n}\n\n// Function to clean input text by removing escaped backslashes\nfunction cleanInputText(text) {\n  if (!text) return '';\n  return String(text).replace(/\\\\\\\\/g, '\\\\');\n}\n\n// Get the analysis data\nconst analysis = Array.isArray($json) ? $json[0] : $json;\n\n// Handle the image\nlet imageBase64 = analysis.image_base64;\nconst hasFramePath = analysis.frame_path && analysis.frame_path.trim() !== '';\n\n// Determine risk icon\nlet riskIcon = '';\nswitch (analysis.risk_level) {\n  case 'Low':\n    riskIcon = '✅';\n    break;\n  case 'Medium':\n    riskIcon = '⚠️';\n    break;\n  case 'High':\n    riskIcon = '🚨';\n    break;\n  case 'Very High':\n    riskIcon = '⛔';\n    break;\n  case 'Extreme':\n    riskIcon = '🆘';\n    break;\n  default:\n    riskIcon = '❓';\n}\n\n// Visitor type\nconst visitorType = analysis.hasOwnProperty('visit_count') && analysis.visit_count > 1 \n  ? 'Known Visitor' \n  : 'New Visitor';\n\n// Format dates\nconst firstSeen = analysis.first_seen ? `*First Seen:* ${escapeMarkdown(analysis.first_seen)}\\n` : '';\nconst lastSeen = analysis.last_seen ? `*Last Seen:* ${escapeMarkdown(analysis.last_seen)}\\n` : '';\n\n// Clean and escape description and risk factors\nconst description = analysis.description \n  ? escapeMarkdown(cleanInputText(analysis.description)) \n  : 'No description available';\n\nconst riskFactors = analysis.risk_factors \n  ? escapeMarkdown(Array.isArray(analysis.risk_factors) \n      ? analysis.risk_factors.join(', ')\n      : cleanInputText(analysis.risk_factors))\n  : 'None';\n\n// Final message with proper MarkdownV2 formatting\nconst formattedMessage = `${riskIcon} SECURITY ALERT ${riskIcon}\\n\\n` +\n  `*Risk Level:* ${escapeMarkdown(analysis.risk_level)} (Score: ${escapeMarkdown(String(analysis.risk_score))})\\n` +\n  `*Camera:* ${escapeMarkdown(analysis.camera_name)}\\n` +\n  `*Time:* ${escapeMarkdown(analysis.timestamp)}\\n` +\n  `*Visitor Type:* ${escapeMarkdown(visitorType)}\\n` +\n  `${firstSeen}` +\n  `${lastSeen}` +\n  `*Description:* ${description}\\n\\n` +\n  `*Risk Factors:* ${riskFactors}`;\n\n// Telegram output\nlet telegramOutput = {\n  json: {\n    message: formattedMessage,\n    parse_mode: 'MarkdownV2', // Ensure Telegram knows we're using MarkdownV2\n    risk_level: analysis.risk_level,\n    risk_score: analysis.risk_score,\n    timestamp: analysis.timestamp,\n    camera_name: analysis.camera_name,\n    first_seen: analysis.first_seen,\n    last_seen: analysis.last_seen\n  }\n};\n\n// Include image or frame path\nif (imageBase64) {\n  telegramOutput.json.image_base64 = imageBase64;\n} else if (hasFramePath) {\n  // Send the image using the frame_path (file path to the image)\n  telegramOutput.json.frame_path = analysis.frame_path;\n}\n\n// Return the data that would be sent to the Telegram bot API\nreturn telegramOutput;\n"
+      },
+      "id": "f48856b6-e9bc-48ea-b587-d6322e53e18f",
+      "name": "Format Telegram Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{$json[\"frame_path\"]}}",
+        "dataPropertyName": "TelegramData"
+      },
+      "name": "Read Image File",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        240
+      ],
+      "id": "f0c74397-18a6-4351-8b02-20083fcd35c2"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "1060541289",
+        "binaryData": true,
+        "binaryPropertyName": "TelegramData",
+        "additionalFields": {
+          "caption": "={{$json.message}}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        60,
+        240
+      ],
+      "id": "96768eec-7d30-424f-a154-5503b16f74b6",
+      "name": "Telegram1",
+      "webhookId": "f5b44784-3635-4391-8a3f-719e5a5cefbf",
+      "credentials": {
+        "telegramApi": {
+          "id": "21i1sZcAwrhoo8L3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this security camera image and associated metadata. Describe the person in detail including: clothing (especially if wearing hoodie, mask, hat, etc.), visible face or obstruction, visible items they're carrying, and time of day. Calculate a risk score based on the following criteria:\n\n- Mask (surgical, etc.): +3 points\n- Full hoodie: +4 points\n- Weapon (knife/gun or suspicious object): +5 points\n- Nighttime (10 PM–5 AM): +2 points\n- In restricted area: +2 points\n\nClassify the risk level as:\n- Low (0–2)\n- Medium (3–4)\n- High (5–6)\n- Very High (7–8)\n- Extreme (9+)\n\nIMPORTANT: Return ONLY a valid JSON object with no additional text, explanations, or markdown formatting. The response must be a single parseable JSON object without code blocks.\n\nRequired JSON structure:\n{\n  \"description\": \"Detailed description of the person\",\n  \"risk_factors\": [\"List of identified risk factors\"],\n  \"risk_score\": numeric_score,\n  \"risk_level\": \"risk_level_category\",\n  \"timestamp\": \"{{$json.timestamp}}\",\n  \"camera_name\": \"{{$json.camera_name}}\",\n  \"unknown_id\": \"{{$json.unknown_id}}\",\n  \"previous_visitor\": false,\n  \"visit_count\": {{$json.visit_count}},\n  \"first_seen\": \"{{$json.first_seen}}\",\n  \"last_seen\": \"{{$json.last_seen}}\",\n  \"frame_path\": \"{{$json.frame_path}}\"\n}\n\nImage: {{$json.image}}",
+        "options": {
+          "systemMessage": "You are a security expert analyzing security camera images. Your goal is to provide detailed descriptions of individuals in the images and assess potential security risks based on visual traits."
+        }
+      },
+      "id": "e060dcb5-ee22-4ca8-adca-578f3ce6c501",
+      "name": "AI Agent (New Visitor)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -1260,
+        0
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this security camera image and associated metadata. Describe the person in detail including: clothing (especially if wearing hoodie, mask, hat, etc.), visible face or obstruction, visible items they're carrying, and time of day. Calculate a reduced risk score using the following criteria:\n\n- Mask (surgical, etc.): +1 point\n- Full hoodie: +2 points\n- Weapon (knife/gun or suspicious object): +3 points\n- Nighttime (10 PM–5 AM): +1 point\n- In restricted area: +1 point\n\nClassify the risk level as:\n- Low (0–2)\n- Medium (3–4)\n- High (5–6)\n- Very High (7–8)\n- Extreme (9+)\n\nIMPORTANT: Return ONLY a valid JSON object with no additional text, explanations, or markdown formatting. The response must be a single parseable JSON object without code blocks.\n\nRequired JSON structure:\n{\n  \"description\": \"Detailed description of the person\",\n  \"risk_factors\": [\"List of identified risk factors\"],\n  \"risk_score\": numeric_score,\n  \"risk_level\": \"risk_level_category\",\n  \"timestamp\": \"{{$json.timestamp}}\",\n  \"camera_name\": \"{{$json.camera_name}}\",\n  \"unknown_id\": null,\n  \"previous_visitor\": true,\n  \"visit_count\": {{$json.visit_count}},\n  \"first_seen\": \"{{$json.first_seen}}\",\n  \"last_seen\": \"{{$json.last_seen}}\",\n  \"frame_path\": \"{{$json.frame_path}}\"\n}\n\nImage: {{$json.image}}",
+        "options": {
+          "systemMessage": "You are a security expert analyzing security camera images. Your goal is to provide detailed descriptions of individuals in the images and assess potential security risks based on visual traits."
+        }
+      },
+      "id": "9c13d15b-812b-498d-ad8d-b1f18be5e112",
+      "name": "AI Agent  (Known Visitor)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -1240,
+        460
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clean JSON Response function for n8n\n// This function handles various formats of AI-generated JSON responses\n// and returns a clean, parseable JSON object\n\nfunction cleanJSONResponse(response) {\n  try {\n    // Extract the output property if it exists\n    const output = response.output || response;\n    \n    let jsonStr = output;\n    \n    // If output is a string, clean it up\n    if (typeof jsonStr === 'string') {\n      // Remove markdown code block formatting if present\n      jsonStr = jsonStr.replace(/```json\\n|\\n```|```/g, '');\n      \n      // Attempt to find a JSON object in the text\n      const jsonMatch = jsonStr.match(/\\{[\\s\\S]*\\}/);\n      if (jsonMatch) {\n        jsonStr = jsonMatch[0];\n      }\n    }\n    \n    // Handle the case where the response is already a valid object\n    if (typeof jsonStr === 'object' && jsonStr !== null && !Array.isArray(jsonStr)) {\n      return jsonStr;\n    }\n    \n    // Parse the JSON string to object\n    const parsedJson = JSON.parse(jsonStr);\n    \n    // Return the cleaned JSON\n    return parsedJson;\n  } catch (error) {\n    // Return error information if parsing fails\n    return { \n      error: \"Failed to parse JSON\", \n      message: error.message,\n      originalOutput: response\n    };\n  }\n}\n\n// Get the response from the previous node\nconst cleanedResponse = cleanJSONResponse($json);\n\n// Return the clean JSON\nreturn {\n  json: cleanedResponse\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        400
+      ],
+      "id": "b931822e-3d23-4dac-a767-9c4e81a1d398",
+      "name": "Json Transformer Known"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clean JSON Response function for n8n\n// This function handles various formats of AI-generated JSON responses\n// and returns a clean, parseable JSON object\n\nfunction cleanJSONResponse(response) {\n  try {\n    // Extract the output property if it exists\n    const output = response.output || response;\n    \n    let jsonStr = output;\n    \n    // If output is a string, clean it up\n    if (typeof jsonStr === 'string') {\n      // Remove markdown code block formatting if present\n      jsonStr = jsonStr.replace(/```json\\n|\\n```|```/g, '');\n      \n      // Attempt to find a JSON object in the text\n      const jsonMatch = jsonStr.match(/\\{[\\s\\S]*\\}/);\n      if (jsonMatch) {\n        jsonStr = jsonMatch[0];\n      }\n    }\n    \n    // Handle the case where the response is already a valid object\n    if (typeof jsonStr === 'object' && jsonStr !== null && !Array.isArray(jsonStr)) {\n      return jsonStr;\n    }\n    \n    // Parse the JSON string to object\n    const parsedJson = JSON.parse(jsonStr);\n    \n    // Return the cleaned JSON\n    return parsedJson;\n  } catch (error) {\n    // Return error information if parsing fails\n    return { \n      error: \"Failed to parse JSON\", \n      message: error.message,\n      originalOutput: response\n    };\n  }\n}\n\n// Get the response from the previous node\nconst cleanedResponse = cleanJSONResponse($json);\n\n// Return the clean JSON\nreturn {\n  json: cleanedResponse\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        120
+      ],
+      "id": "20f806e8-d875-400c-8ffa-07e9296e7339",
+      "name": "Json Transformer unKnown"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Right Camera Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Camera Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Front Camera Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Camera Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Left Camera Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Camera Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rear Camera Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Camera Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Camera Data": {
+      "main": [
+        [
+          {
+            "node": "Known/Unknown Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Known/Unknown Split": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (New Visitor)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent  (Known Visitor)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Vision Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent (New Visitor)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Vision Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent  (Known Visitor)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk Level Switch": {
+      "main": [
+        [
+          {
+            "node": "Format Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Read Image File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Image File": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (New Visitor)": {
+      "main": [
+        [
+          {
+            "node": "Json Transformer unKnown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent  (Known Visitor)": {
+      "main": [
+        [
+          {
+            "node": "Json Transformer Known",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Json Transformer Known": {
+      "main": [
+        [
+          {
+            "node": "Risk Level Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Json Transformer unKnown": {
+      "main": [
+        [
+          {
+            "node": "Risk Level Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2b5a831a-fce9-4b29-b046-3dd25c31cffa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "76820cb11a2b39034f43c0ce6483223ee817d9fa97ca26e7d33796695b0b70fc"
+  },
+  "id": "oGrMNNdEnbu4XHyi",
+  "tags": [
+    {
+      "createdAt": "2025-05-03T06:41:40.453Z",
+      "updatedAt": "2025-05-03T06:41:40.453Z",
+      "id": "EsuA8jJIRg1BENJn",
+      "name": "Camera"
+    },
+    {
+      "createdAt": "2025-05-03T06:41:40.454Z",
+      "updatedAt": "2025-05-03T06:41:40.454Z",
+      "id": "HSsGGpKFIkAtdWsQ",
+      "name": "LLM"
+    }
+  ]
+}
