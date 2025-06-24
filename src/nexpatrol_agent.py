@@ -431,6 +431,7 @@ def process_video(video_path, camera_id):
                                 logger.info(f"[Camera {camera_id}] Processing unknown visitor: ULID {ulid_key}, detections: {tracker['detection_count']}")
                                 process_unknown(
                                     tracker['image'],
+                                    confidence,
                                     tracker['embedding'],
                                     timestamp,
                                     camera_id,
