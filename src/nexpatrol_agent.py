@@ -429,11 +429,11 @@ def process_video(video_path, camera_id):
                             time_since_first_seen = current_time - tracker['first_seen']
                             if time_since_first_seen > VERIFICATION_WINDOW and tracker['detection_count'] >= MIN_DETECTIONS:
                                 logger.info(f"[Camera {camera_id}] Processing unknown visitor: ULID {ulid_key}, detections: {tracker['detection_count']}")
-                                day_key = datetime.now().strftime("%Y%m%d")
+                                day_key2 = datetime.now().strftime("%Y%m%d")
                                 process_unknown(
                                     tracker['image'],
                                     confidence,
-                                    day_key,
+                                    day_key2,
                                     tracker['embedding'],
                                     timestamp,
                                     camera_id,
