@@ -28,7 +28,8 @@ def process_unknown(image, embedding, timestamp, camera_id=0, unknown_id=None, v
         {
             'timestamp': timestamp if timestamp else datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'device': f'camera_{camera_id}',
-            'frame_path': f'/app/detected_faces/camera_{camera_id}/Unknown/unknown_{unknown_id}_{timestamp.replace(" ", "_")}.jpg',
+            # 'frame_path': f'/app/detected_faces/camera_{camera_id}/Unknown/unknown_{unknown_id}_{timestamp.replace(":", "_")}.jpg',
+            'frame_path': f'/app/detected_faces/camera_{camera_id}/Unknown/unknown_{unknown_id}.jpg',
             'unknown_id': unknown_id,
             'image_base64': image_base64,
             'previous_visitor': visit_count > 1,
