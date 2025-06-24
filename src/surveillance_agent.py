@@ -10,7 +10,7 @@ config.read('/app/configs/config.ini')
 
 logger = logging.getLogger(__name__)
 
-def process_unknown(image, confidence, embedding, timestamp, camera_id=0, unknown_id=None, visit_count=0, first_seen=None, last_seen=None):
+def process_unknown(image, confidence, day_key, embedding, timestamp, camera_id=0, unknown_id=None, visit_count=0, first_seen=None, last_seen=None):
     success, buffer = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 80])
     if not success:
         logger.error(f"[Camera {camera_id}] Failed to encode image for webhook, ULID: {unknown_id}")
@@ -29,7 +29,7 @@ def process_unknown(image, confidence, embedding, timestamp, camera_id=0, unknow
             'timestamp': timestamp if timestamp else datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'device': f'camera_{camera_id}',
             # 'frame_path': f'/app/detected_faces/camera_{camera_id}/Unknown/unknown_{unknown_id}_{timestamp.replace(":", "_")}.jpg',
-            'frame_path': f'/app/detected_faces/camera_{camera_id}/Unknown/unknown_{unknown_id}_{confidence:.2f}.jpg',
+            'frame_path': f'/app/detected_faces/camera_{camera_id}/{day_key}/Unknown/unknown_{unknown_id}_{confidence:.2f}.jpg',
             'unknown_id': unknown_id,
             'image_base64': image_base64,
             'previous_visitor': visit_count > 1,
